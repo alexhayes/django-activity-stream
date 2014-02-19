@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+from django.db.models.signals import pre_save
 
 try:
     from django.utils import timezone
@@ -78,6 +79,7 @@ class Action(models.Model):
 
     verb = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    searchable = models.TextField(blank=True, null=True)
 
     target_content_type = models.ForeignKey(ContentType, related_name='target',
         blank=True, null=True)
@@ -149,6 +151,14 @@ class Action(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('actstream.views.detail', [self.pk])
+
+
+def set_searchable(sender, instance, **kwargs):
+    """
+    Set the searchable field on an Action.
+    """
+    instance.searchable = '%s' % instance
+pre_save.connect(set_searchable, Action)
 
 
 # convenient accessors
